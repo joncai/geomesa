@@ -27,7 +27,7 @@ import org.locationtech.geomesa.utils.bin.BinaryOutputEncoder
 import org.locationtech.geomesa.utils.cache.SoftThreadLocal
 import org.locationtech.geomesa.utils.collection.{CloseableIterator, SelfClosingIterator}
 import org.locationtech.geomesa.utils.geotools.SimpleFeatureTypes
-import org.locationtech.geomesa.utils.iterators.SortingSimpleFeatureIterator
+import org.locationtech.geomesa.utils.iterators.{ExceptionalIterator, SortingSimpleFeatureIterator}
 import org.locationtech.geomesa.utils.stats.{MethodProfiling, StatParser}
 import org.locationtech.jts.geom.Geometry
 import org.opengis.feature.`type`.{AttributeDescriptor, GeometryDescriptor}
@@ -96,7 +96,8 @@ class QueryPlanner[DS <: GeoMesaDataStore[DS]](ds: DS) extends QueryRunner with 
       iterator = iterator.map(project.apply)
     }
 
-    iterator
+    // wrap in an exceptional iterator to prevent geoserver from suppressing any exceptions
+    ExceptionalIterator(iterator)
   }
 
   /**
