@@ -10,6 +10,7 @@ package org.locationtech.geomesa.index.utils
 
 import java.util.concurrent._
 
+import com.typesafe.scalalogging.LazyLogging
 import org.locationtech.geomesa.utils.collection.CloseableIterator
 import org.locationtech.geomesa.index.utils.concurrent.CachedThreadPool
 
@@ -30,7 +31,7 @@ import scala.util.control.NonFatal
   * @tparam R scan result type
   */
 abstract class AbstractBatchScan[T, R <: AnyRef](ranges: Seq[T], threads: Int, buffer: Int, sentinel: R)
-    extends CloseableIterator[R] {
+    extends CloseableIterator[R] with LazyLogging {
 
   import scala.collection.JavaConverters._
 
@@ -156,6 +157,7 @@ abstract class AbstractBatchScan[T, R <: AnyRef](ranges: Seq[T], threads: Int, b
               val r = result.next
               while (!outQueue.offer(r, 100, TimeUnit.MILLISECONDS)) {
                 if (closed) {
+                  logger.info("Stop publishing result to outQueue due to scan close.")
                   return
                 }
               }
