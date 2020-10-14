@@ -86,7 +86,7 @@ trait KryoFeatureSerialization extends SimpleFeatureSerializer {
         output.setBuffer(expanded)
       } else {
         val buffer = output.getBuffer
-        var i = end
+        var i = end - 1
         while (i > offset) {
           buffer(i + shift) = buffer(i)
           i -= 1

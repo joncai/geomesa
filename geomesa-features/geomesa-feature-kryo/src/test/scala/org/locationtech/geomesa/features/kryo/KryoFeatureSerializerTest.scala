@@ -412,6 +412,24 @@ class KryoFeatureSerializerTest extends Specification with LazyLogging {
       }
     }
 
+    "shift buffered feature content in kryo output correctly" in {
+      val spec = "age:Int,name:String,dtg:Date,*geom:Point:srid=4326"
+      val sft = SimpleFeatureTypes.createType("test", spec)
+      val sf = ScalaSimpleFeature.create(sft, "fid-0", "10", null, "2013-01-02T00:00:00.000Z", "POINT(45.0 49.0)")
+      // 130997 is a magic number to make required buffer size equal to 131072 which is the smallest size to trigger
+      // a feature content shift to the very last byte of the buffer.
+      val name = new String(Array.fill(130997)(1.toByte), StandardCharsets.UTF_8)
+      sf.setAttribute("name", name)
+
+      val serializer = KryoFeatureSerializer(sft, Set.empty[SerializationOption])
+      val serialized = serializer.serialize(sf)
+      serialized.length must beGreaterThan(Short.MaxValue * 2)
+      val deserialized = serializer.deserialize(serialized)
+      deserialized.getAttribute("name") mustEqual name
+      deserialized mustEqual sf
+      deserialized.getUserData.asScala must beEmpty
+    }
+
     "be backwards compatible" in {
       val spec = "dtg:Date,*geom:Point:srid=4326"
       val sft = SimpleFeatureTypes.createType("testType", spec)
